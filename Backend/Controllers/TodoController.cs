@@ -16,7 +16,7 @@ namespace TodoApp.Controllers
         private readonly ApiDbContext _context;
 
         public TodoController(ApiDbContext context)
-        {   
+        {
             _context = context;
         }
 
@@ -30,15 +30,15 @@ namespace TodoApp.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateItem(ItemData data)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 await _context.Items.AddAsync(data);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction("GetItem", new {data.Id}, data);
+                return CreatedAtAction("GetItem", new { data.Id }, data);
             }
 
-            return new JsonResult("Something went wrong") {StatusCode = 500};
+            return new JsonResult("Something went wrong") { StatusCode = 500 };
         }
 
         [HttpGet("{id}")]
@@ -46,7 +46,7 @@ namespace TodoApp.Controllers
         {
             var item = await _context.Items.FirstOrDefaultAsync(x => x.Id == id);
 
-            if(item == null)
+            if (item == null)
                 return NotFound();
 
             return Ok(item);
@@ -55,18 +55,18 @@ namespace TodoApp.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateItem(int id, ItemData item)
         {
-            if(id != item.Id)
+            if (id != item.Id)
                 return BadRequest();
 
             var existItem = await _context.Items.FirstOrDefaultAsync(x => x.Id == id);
 
-            if(existItem == null)
+            if (existItem == null)
                 return NotFound();
 
             existItem.Title = item.Title;
             existItem.Description = item.Description;
             existItem.Done = item.Done;
-            
+
             // Implement the changes on the database level
             await _context.SaveChangesAsync();
 
@@ -78,7 +78,7 @@ namespace TodoApp.Controllers
         {
             var existItem = await _context.Items.FirstOrDefaultAsync(x => x.Id == id);
 
-            if(existItem == null)
+            if (existItem == null)
                 return NotFound();
 
             _context.Items.Remove(existItem);
