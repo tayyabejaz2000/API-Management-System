@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Backend.Models.DTOs.Requests
+namespace AMS.Models.DTOs.Requests
 {
     public class UserRegistrationDto
     {

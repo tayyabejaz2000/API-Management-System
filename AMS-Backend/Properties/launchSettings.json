@@ -17,7 +17,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "TodoApp": {
+    "AMS": {
       "commandName": "Project",
       "dotnetRunMessages": "true",
       "launchBrowser": true,

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Backend.Configuration
+namespace AMS.Configuration
 {
     public class AuthResult
     {

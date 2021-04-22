@@ -1,4 +1,4 @@
-namespace Backend.Configuration
+namespace AMS.Configuration
 {
     public class JwtConfig
     {

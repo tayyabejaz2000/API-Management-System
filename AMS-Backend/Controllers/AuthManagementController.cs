@@ -11,13 +11,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-using Backend.Configuration;
+using AMS.Configuration;
 
-using Backend.Models;
-using Backend.Models.DTOs.Requests;
-using Backend.Models.DTOs.Responses;
+using AMS.Models;
+using AMS.Models.DTOs.Requests;
+using AMS.Models.DTOs.Responses;
 
-namespace Backend.Controllers
+namespace AMS.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Backend.Models;
+using AMS.Models;
 
-namespace Backend.Data
+namespace AMS.Data
 {
     public class ApiDbContext : IdentityDbContext<User>
     {

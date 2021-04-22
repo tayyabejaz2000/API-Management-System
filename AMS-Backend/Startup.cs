@@ -18,11 +18,11 @@ using Microsoft.OpenApi.Models;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Identity;
 
-using Backend.Data;
-using Backend.Models;
-using Backend.Configuration;
+using AMS.Data;
+using AMS.Models;
+using AMS.Configuration;
 
-namespace TodoApp
+namespace AMS
 {
     public class Startup
     {
