@@ -1,17 +1,15 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using TodoApp.Models;
+using Backend.Models;
 
-namespace TodoApp.Data
+namespace Backend.Data
 {
-    public class ApiDbContext : IdentityDbContext
+    public class ApiDbContext : IdentityDbContext<User>
     {
-        public virtual DbSet<ItemData> Items {get;set;}
-
         public ApiDbContext(DbContextOptions<ApiDbContext> options)
             : base(options)
         {
-            
+
         }
     }
 }

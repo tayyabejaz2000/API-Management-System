@@ -1,9 +1,9 @@
-using TodoApp.Configuration;
+using Backend.Configuration;
 
-namespace TodoApp.Models.DTOs.Responses
+namespace Backend.Models.DTOs.Responses
 {
     public class RegistrationResponse : AuthResult
     {
-        
+
     }
 }

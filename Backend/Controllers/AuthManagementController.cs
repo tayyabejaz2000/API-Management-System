@@ -5,25 +5,29 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using TodoApp.Configuration;
-using TodoApp.Models.DTOs.Requests;
-using TodoApp.Models.DTOs.Responses;
 
-namespace TodoApp.Controllers
+using Backend.Configuration;
+
+using Backend.Models;
+using Backend.Models.DTOs.Requests;
+using Backend.Models.DTOs.Responses;
+
+namespace Backend.Controllers
 {
-    [Route("api/[controller]")] // api/authManagement
+    [Route("api/[controller]")]
     [ApiController]
     public class AuthManagementController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<User> _userManager;
         private readonly JwtConfig _jwtConfig;
 
         public AuthManagementController(
-            UserManager<IdentityUser> userManager,
+            UserManager<User> userManager,
             IOptionsMonitor<JwtConfig> optionsMonitor)
         {
             _userManager = userManager;
@@ -34,44 +38,50 @@ namespace TodoApp.Controllers
         [Route("Register")]
         public async Task<IActionResult> Register([FromBody] UserRegistrationDto user)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 // We can utilise the model
                 var existingUser = await _userManager.FindByEmailAsync(user.Email);
 
-                if(existingUser != null)
+                if (existingUser != null)
                 {
-                    return BadRequest(new RegistrationResponse(){
-                            Errors = new List<string>() {
+                    return BadRequest(new RegistrationResponse()
+                    {
+                        Errors = new List<string>() {
                                 "Email already in use"
                             },
-                            Success = false
+                        Success = false
                     });
                 }
 
-                var newUser = new IdentityUser() { Email = user.Email, UserName = user.Username};
+                var newUser = new User() { Email = user.Email, UserName = user.Username };
                 var isCreated = await _userManager.CreateAsync(newUser, user.Password);
-                if(isCreated.Succeeded)
+                if (isCreated.Succeeded)
                 {
-                   var jwtToken =  GenerateJwtToken( newUser);
+                    var jwtToken = GenerateJwtToken(newUser);
 
-                   return Ok(new RegistrationResponse() {
-                       Success = true,
-                       Token = jwtToken
-                   });
-                } else {
-                    return BadRequest(new RegistrationResponse(){
-                            Errors = isCreated.Errors.Select(x => x.Description).ToList(),
-                            Success = false
+                    return Ok(new RegistrationResponse()
+                    {
+                        Success = true,
+                        Token = jwtToken
+                    });
+                }
+                else
+                {
+                    return BadRequest(new RegistrationResponse()
+                    {
+                        Errors = isCreated.Errors.Select(x => x.Description).ToList(),
+                        Success = false
                     });
                 }
             }
 
-            return BadRequest(new RegistrationResponse(){
-                    Errors = new List<string>() {
+            return BadRequest(new RegistrationResponse()
+            {
+                Errors = new List<string>() {
                         "Invalid payload"
                     },
-                    Success = false
+                Success = false
             });
         }
 
@@ -79,47 +89,53 @@ namespace TodoApp.Controllers
         [Route("Login")]
         public async Task<IActionResult> Login([FromBody] UserLoginRequest user)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 var existingUser = await _userManager.FindByEmailAsync(user.Email);
 
-                if(existingUser == null) {
-                        return BadRequest(new RegistrationResponse(){
-                            Errors = new List<string>() {
+                if (existingUser == null)
+                {
+                    return BadRequest(new RegistrationResponse()
+                    {
+                        Errors = new List<string>() {
                                 "Invalid login request"
                             },
-                            Success = false
+                        Success = false
                     });
                 }
 
                 var isCorrect = await _userManager.CheckPasswordAsync(existingUser, user.Password);
 
-                if(!isCorrect) {
-                      return BadRequest(new RegistrationResponse(){
-                            Errors = new List<string>() {
+                if (!isCorrect)
+                {
+                    return BadRequest(new RegistrationResponse()
+                    {
+                        Errors = new List<string>() {
                                 "Invalid login request"
                             },
-                            Success = false
+                        Success = false
                     });
                 }
 
-                var jwtToken  =GenerateJwtToken(existingUser);
+                var jwtToken = GenerateJwtToken(existingUser);
 
-                return Ok(new RegistrationResponse() {
+                return Ok(new RegistrationResponse()
+                {
                     Success = true,
                     Token = jwtToken
                 });
             }
 
-            return BadRequest(new RegistrationResponse(){
-                    Errors = new List<string>() {
+            return BadRequest(new RegistrationResponse()
+            {
+                Errors = new List<string>() {
                         "Invalid payload"
                     },
-                    Success = false
+                Success = false
             });
         }
 
-        private string GenerateJwtToken(IdentityUser user)
+        private string GenerateJwtToken(User user)
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
 
@@ -127,9 +143,9 @@ namespace TodoApp.Controllers
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new []
+                Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim("Id", user.Id), 
+                    new Claim("Id", user.Id),
                     new Claim(JwtRegisteredClaimNames.Email, user.Email),
                     new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
