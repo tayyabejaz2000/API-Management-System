@@ -5,15 +5,18 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
-using AMS.Configuration;
-
+using AMS.Data;
 using AMS.Models;
+using AMS.Configuration;
 using AMS.Models.DTOs.Requests;
 using AMS.Models.DTOs.Responses;
 
@@ -23,15 +26,19 @@ namespace AMS.Controllers
     [ApiController]
     public class AuthManagementController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly JwtConfig _jwtConfig;
 
+        private ApiDbContext _dbContext;
+
         public AuthManagementController(
-            UserManager<User> userManager,
-            IOptionsMonitor<JwtConfig> optionsMonitor)
+            UserManager<ApplicationUser> userManager,
+            IOptionsMonitor<JwtConfig> optionsMonitor,
+            ApiDbContext _context)
         {
             _userManager = userManager;
             _jwtConfig = optionsMonitor.CurrentValue;
+            _dbContext = _context;
         }
 
         [HttpPost]
@@ -54,16 +61,19 @@ namespace AMS.Controllers
                     });
                 }
 
-                var newUser = new User() { Email = user.Email, UserName = user.Username };
+                var newUser = new ApplicationUser() { Email = user.Email, UserName = user.Username };
                 var isCreated = await _userManager.CreateAsync(newUser, user.Password);
                 if (isCreated.Succeeded)
                 {
-                    var jwtToken = GenerateJwtToken(newUser);
+                    var (jwtAccessToken, jwtRefreshToken) = GenerateJwtTokenPair(newUser);
 
+                    _dbContext.RefreshTokens.Add(jwtRefreshToken);
+                    _dbContext.SaveChanges();
+                    SetRefreshTokenInCookie(jwtRefreshToken);
                     return Ok(new RegistrationResponse()
                     {
                         Success = true,
-                        Token = jwtToken
+                        Token = jwtAccessToken,
                     });
                 }
                 else
@@ -117,12 +127,20 @@ namespace AMS.Controllers
                     });
                 }
 
-                var jwtToken = GenerateJwtToken(existingUser);
-
+                _dbContext.Entry(existingUser).Collection("RefreshTokens").Load();
+                var jwtRefreshToken = existingUser.RefreshTokens.Where(x => x.IsActive).FirstOrDefault();
+                if (jwtRefreshToken == null)
+                {
+                    jwtRefreshToken = GenerateJwtRefreshToken(existingUser);
+                    _dbContext.RefreshTokens.Add(jwtRefreshToken);
+                    _dbContext.SaveChanges();
+                }
+                var jwtAccessToken = GenerateJwtAccessToken(existingUser);
+                SetRefreshTokenInCookie(jwtRefreshToken);
                 return Ok(new RegistrationResponse()
                 {
                     Success = true,
-                    Token = jwtToken
+                    Token = jwtAccessToken,
                 });
             }
 
@@ -135,7 +153,49 @@ namespace AMS.Controllers
             });
         }
 
-        private string GenerateJwtToken(User user)
+        [HttpPost]
+        [Route("Refresh-Token")]
+        public async Task<IActionResult> RefreshToken()
+        {
+            var Token = Request.Cookies["refreshToken"];
+            var jwtRefreshToken = _dbContext.RefreshTokens.Where(x => x.Token == Token).Include(x => x.User).FirstOrDefault();
+            if (jwtRefreshToken == null)
+            {
+                return BadRequest(new RegistrationResponse()
+                {
+                    Errors = new List<string>() {
+                        "Invalid Token"
+                    },
+                    Success = false
+                });
+            }
+            else if (!jwtRefreshToken.IsActive)
+            {
+                return BadRequest(new RegistrationResponse()
+                {
+                    Errors = new List<string>() {
+                        "Refresh Token Expired or Revoked"
+                    },
+                    Success = false
+                });
+            }
+            var jwtAccessToken = GenerateJwtAccessToken(jwtRefreshToken.User);
+            var newJwtRefreshToken = GenerateJwtRefreshToken(jwtRefreshToken.User);
+
+            jwtRefreshToken.Revoked = DateTime.UtcNow;
+            _dbContext.RefreshTokens.Update(jwtRefreshToken);
+            await _dbContext.RefreshTokens.AddAsync(newJwtRefreshToken);
+            await _dbContext.SaveChangesAsync();
+
+            SetRefreshTokenInCookie(newJwtRefreshToken);
+            return Ok(new RegistrationResponse()
+            {
+                Success = true,
+                Token = jwtAccessToken,
+            });
+        }
+
+        private string GenerateJwtAccessToken(ApplicationUser user)
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
 
@@ -150,14 +210,40 @@ namespace AMS.Controllers
                     new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 }),
-                Expires = DateTime.UtcNow.AddHours(6),
+                Expires = DateTime.UtcNow.AddMinutes(5),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
-            var jwtToken = jwtTokenHandler.WriteToken(token);
+            var jwtAccessToken = jwtTokenHandler.WriteToken(token);
 
-            return jwtToken;
+            return jwtAccessToken;
+        }
+        private RefreshToken GenerateJwtRefreshToken(ApplicationUser user)
+        {
+            var randomNumber = new byte[32];
+            var generator = new RNGCryptoServiceProvider();
+            generator.GetBytes(randomNumber);
+            return new RefreshToken
+            {
+                Token = Convert.ToBase64String(randomNumber),
+                Expires = DateTime.UtcNow.AddDays(10),
+                Created = DateTime.UtcNow,
+                User = user
+            };
+        }
+        private (string, RefreshToken) GenerateJwtTokenPair(ApplicationUser user)
+        {
+            return (GenerateJwtAccessToken(user), GenerateJwtRefreshToken(user));
+        }
+        private void SetRefreshTokenInCookie(RefreshToken refreshToken)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = refreshToken.Expires,
+            };
+            Response.Cookies.Append("refreshToken", refreshToken.Token, cookieOptions);
         }
     }
 }
