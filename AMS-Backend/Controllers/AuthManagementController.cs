@@ -154,6 +154,40 @@ namespace AMS.Controllers
         }
 
         [HttpPost]
+        [Route("User-Context")]
+        public IActionResult GetUserContext()
+        {
+            var Token = Request.Cookies["refreshToken"];
+            var userJwtToken = _dbContext.RefreshTokens.Where(x => x.Token == Token).Include(x => x.User).FirstOrDefault();
+            if (userJwtToken == null)
+            {
+                return BadRequest(new RegistrationResponse()
+                {
+                    Errors = new List<string>() {
+                        "Invalid Token"
+                    },
+                    Success = false
+                });
+            }
+            else if (userJwtToken.User == null)
+            {
+                return BadRequest(new RegistrationResponse()
+                {
+                    Errors = new List<string>() {
+                        "Bad Token"
+                    },
+                    Success = false
+                });
+            }
+            var user = userJwtToken.User;
+            return Ok(new UserContext()
+            {
+                Username = user.UserName,
+                PhoneNumber = user.PhoneNumber
+            });
+        }
+
+        [HttpPost]
         [Route("Refresh-Token")]
         public async Task<IActionResult> RefreshToken()
         {
