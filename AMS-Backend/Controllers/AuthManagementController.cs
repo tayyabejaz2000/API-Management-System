@@ -77,11 +77,11 @@ namespace AMS.Controllers
 
                     _dbContext.RefreshTokens.Add(jwtRefreshToken);
                     _dbContext.SaveChanges();
-                    SetRefreshTokenInCookie(jwtRefreshToken);
                     return Ok(new RegistrationResponse()
                     {
                         Success = true,
                         Token = jwtAccessToken,
+                        RefreshToken = jwtRefreshToken.Token
                     });
                 }
                 else
@@ -144,11 +144,11 @@ namespace AMS.Controllers
                     _dbContext.SaveChanges();
                 }
                 var jwtAccessToken = GenerateJwtAccessToken(existingUser);
-                SetRefreshTokenInCookie(jwtRefreshToken);
                 return Ok(new RegistrationResponse()
                 {
                     Success = true,
                     Token = jwtAccessToken,
+                    RefreshToken = jwtRefreshToken.Token
                 });
             }
 
@@ -158,40 +158,6 @@ namespace AMS.Controllers
                         "Invalid payload"
                     },
                 Success = false
-            });
-        }
-
-        [HttpPost]
-        [Route("User-Context")]
-        public IActionResult GetUserContext()
-        {
-            var Token = Request.Cookies["refreshToken"];
-            var userJwtToken = _dbContext.RefreshTokens.Where(x => x.Token == Token).Include(x => x.User).FirstOrDefault();
-            if (userJwtToken == null)
-            {
-                return BadRequest(new RegistrationResponse()
-                {
-                    Errors = new List<string>() {
-                        "Invalid Token"
-                    },
-                    Success = false
-                });
-            }
-            else if (userJwtToken.User == null)
-            {
-                return BadRequest(new RegistrationResponse()
-                {
-                    Errors = new List<string>() {
-                        "Bad Token"
-                    },
-                    Success = false
-                });
-            }
-            var user = userJwtToken.User;
-            return Ok(new UserContext()
-            {
-                Username = user.UserName,
-                PhoneNumber = user.PhoneNumber
             });
         }
 
@@ -229,11 +195,11 @@ namespace AMS.Controllers
             await _dbContext.RefreshTokens.AddAsync(newJwtRefreshToken);
             await _dbContext.SaveChangesAsync();
 
-            SetRefreshTokenInCookie(newJwtRefreshToken);
             return Ok(new RegistrationResponse()
             {
                 Success = true,
                 Token = jwtAccessToken,
+                RefreshToken = jwtRefreshToken.Token
             });
         }
 
