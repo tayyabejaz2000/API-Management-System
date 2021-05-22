@@ -29,7 +29,7 @@ namespace AMS.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly JwtConfig _jwtConfig;
 
-        private ApiDbContext _dbContext;
+        private readonly ApiDbContext _dbContext;
 
         public AuthManagementController(
             UserManager<ApplicationUser> userManager,
@@ -61,7 +61,15 @@ namespace AMS.Controllers
                     });
                 }
 
-                var newUser = new ApplicationUser() { Email = user.Email, UserName = user.Username };
+                var newUser = new ApplicationUser()
+                {
+                    Email = user.Email,
+                    UserName = user.Username,
+                    Wallet = new UserWallet()
+                    {
+                        Balance = 0
+                    }
+                };
                 var isCreated = await _userManager.CreateAsync(newUser, user.Password);
                 if (isCreated.Succeeded)
                 {

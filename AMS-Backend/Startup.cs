@@ -73,6 +73,9 @@ namespace AMS
                         .AddEntityFrameworkStores<ApiDbContext>();
 
             services.AddControllers();
+            services.AddControllersWithViews();
+            services.AddMvc();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "API-Management-System", Version = "v1" });
@@ -89,10 +92,12 @@ namespace AMS
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "API-Management-System v1"));
             }
 
-            app.UseCors("Any");
+            app.UseStaticFiles();
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors("Any");
             app.UseAuthentication();
             app.UseAuthorization();
 

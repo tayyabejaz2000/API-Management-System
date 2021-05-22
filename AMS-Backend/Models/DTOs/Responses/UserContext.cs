@@ -6,5 +6,6 @@ namespace AMS.Models.DTOs.Responses
     {
         public string Username { get; set; }
         public string PhoneNumber { get; set; }
+        public int WalletBalance { get; set; }
     }
 }
