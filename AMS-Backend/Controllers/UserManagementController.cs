@@ -41,7 +41,7 @@ namespace AMS.Controllers
         [Route("User-Context")]
         public IActionResult GetUserContext()
         {
-            var Token = Request.Headers["refreshToken"];
+            var Token = Request.Headers["refreshToken"].ToString();
             var userJwtToken = _dbContext.RefreshTokens.Where(x => x.Token == Token).Include(x => x.User).ThenInclude(x => x.Wallet).FirstOrDefault();
             if (userJwtToken == null)
             {
