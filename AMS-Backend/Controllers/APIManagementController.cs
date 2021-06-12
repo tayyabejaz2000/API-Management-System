@@ -86,12 +86,12 @@ namespace AMS.Controllers
             return Ok(models);
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("GetAPIByID")]
 
-        public async Task<IActionResult> GetAPIByID([FromHeader] Guid id)
+        public async Task<IActionResult> GetAPIByID([FromBody] APIGetRequest id)
         {
-            var model = await _dbContext.ApiModels.Where(x => x.id == id).FirstOrDefaultAsync();
+            var model = await _dbContext.ApiModels.Where(x => x.id == id.id).FirstOrDefaultAsync();
             if (model == null)
                 return BadRequest(new ResponseDTO()
                 {
