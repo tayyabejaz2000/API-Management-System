@@ -22,7 +22,6 @@ using AMS.Configuration;
 using AMS.Models.DTOs.Requests;
 using AMS.Models.DTOs.Responses;
 
-
 namespace AMS.Controllers
 {
     [Route("Admin")]
@@ -31,7 +30,6 @@ namespace AMS.Controllers
         private readonly ILogger<AdminController> _logger;
 
         private readonly ApiDbContext _dbContext;
-
 
         public AdminController(
             ILogger<AdminController> logger,
