@@ -13,6 +13,6 @@ namespace AMS.Models
         public string sampleCall { get; set; }
         public string desc { get; set; }
         public uint price { get; set; }
-        public ICollection<BoughtAPIs> boughtAPIs { get; set; }
+        public virtual ICollection<BoughtAPIs> boughtAPIs { get; set; }
     }
 }

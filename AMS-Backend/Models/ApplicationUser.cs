@@ -7,7 +7,7 @@ namespace AMS.Models
     public class ApplicationUser : IdentityUser
     {
         public UserWallet Wallet { get; set; }
-        public ICollection<RefreshToken> RefreshTokens { get; set; }
-        public ICollection<BoughtAPIs> BoughtApis { get; set; }
+        public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
+        public virtual ICollection<BoughtAPIs> BoughtApis { get; set; }
     }
 }
