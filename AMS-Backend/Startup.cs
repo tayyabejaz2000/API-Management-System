@@ -93,11 +93,10 @@ namespace AMS
             }
 
             app.UseStaticFiles();
-            app.UseHttpsRedirection();
 
             app.UseRouting();
-
             app.UseCors("Any");
+
             app.UseAuthentication();
             app.UseAuthorization();
 
