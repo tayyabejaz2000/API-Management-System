@@ -195,7 +195,7 @@ namespace AMS.Controllers
         public async Task<IActionResult> GetBoughtAPIs()
         {
             var Token = Request.Headers["refreshToken"].ToString();
-            var userJwtToken = await _dbContext.RefreshTokens.Where(x => x.Token == Token).Include(x => x.User).ThenInclude(u => u.BoughtApis).FirstOrDefaultAsync();
+            var userJwtToken = await _dbContext.RefreshTokens.Where(x => x.Token == Token).Include(x => x.User).FirstOrDefaultAsync();
             if (userJwtToken == null)
             {
                 return BadRequest(new RegistrationResponse()
@@ -218,8 +218,9 @@ namespace AMS.Controllers
             }
 
             var user = userJwtToken.User;
+            var boughtAPIs = await _dbContext.BoughtApis.Where(b => b.User == user).Include(b => b.api).ToListAsync();
 
-            if (user.BoughtApis == null)
+            if (boughtAPIs == null || boughtAPIs.Count == 0)
             {
                 return BadRequest(new ResponseDTO()
                 {
@@ -227,9 +228,9 @@ namespace AMS.Controllers
                     Errors = new List<string> { "User havent bought an API yet" }
                 });
             }
-            
-            
-            return Ok(user.BoughtApis.ToList());
+
+
+            return Ok(boughtAPIs);
         }
     }
 }
