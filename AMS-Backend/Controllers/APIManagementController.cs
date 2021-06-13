@@ -218,8 +218,9 @@ namespace AMS.Controllers
             }
 
             var user = userJwtToken.User;
-            var boughtAPIs = await _dbContext.BoughtApis.Where(b => b.User == user).Include(b => b.api).ToListAsync();
-
+            var boughtAPIs = await _dbContext.BoughtApis.Where(b => b.User == user).ToListAsync();
+            boughtAPIs.ForEach(x => x.api = null);
+            boughtAPIs.ForEach(x => x.User = null);
             if (boughtAPIs == null || boughtAPIs.Count == 0)
             {
                 return BadRequest(new ResponseDTO()
@@ -228,7 +229,6 @@ namespace AMS.Controllers
                     Errors = new List<string> { "User havent bought an API yet" }
                 });
             }
-
 
             return Ok(boughtAPIs);
         }

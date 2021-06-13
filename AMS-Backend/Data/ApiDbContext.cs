@@ -26,9 +26,14 @@ namespace AMS.Data
 
             //Application User
             modelBuilder.Entity<ApplicationUser>()
-            .HasOne(u => u.Wallet).WithOne(w => w.User).HasForeignKey<UserWallet>(w => w.UserID).OnDelete(DeleteBehavior.Cascade);
+            .HasOne(u => u.Wallet).WithOne(w => w.User).HasForeignKey<UserWallet>(w => w.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<ApplicationUser>()
-            .HasMany(u => u.RefreshTokens).WithOne(t => t.User).HasForeignKey("UserID").OnDelete(DeleteBehavior.Cascade);
+            .HasMany(u => u.RefreshTokens).WithOne(t => t.User).HasForeignKey("UserID")
+            .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<ApplicationUser>()
+            .HasMany(u => u.BoughtApis).WithOne(a => a.User).HasForeignKey(u => u.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
 
             //User Wallet
             modelBuilder.Entity<UserWallet>()
