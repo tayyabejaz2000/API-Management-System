@@ -189,5 +189,34 @@ namespace AMS.Controllers
                 });
             }
         }
+        [HttpGet]
+        [Route("GetBoughtAPIs")]
+        public async Task<IActionResult> GetBoughtAPIs()
+        {
+            var Token = Request.Headers["refreshToken"].ToString();
+            var userJwtToken = await _dbContext.RefreshTokens.Where(x => x.Token == Token).Include(x => x.User).ThenInclude(u => u.BoughtApis).FirstOrDefaultAsync();
+            if (userJwtToken == null)
+            {
+                return BadRequest(new RegistrationResponse()
+                {
+                    Errors = new List<string>() {
+                        "Invalid Token"
+                    },
+                    Success = false
+                });
+            }
+            else if (userJwtToken.User == null)
+            {
+                return BadRequest(new RegistrationResponse()
+                {
+                    Errors = new List<string>() {
+                        "Bad Token"
+                    },
+                    Success = false
+                });
+            }
+            var user = userJwtToken.User;
+            return Ok(user.BoughtApis);
+        }
     }
 }
