@@ -166,10 +166,11 @@ namespace AMS.Controllers
             {
                 //Add Bought API to DB
                 await _dbContext.BoughtApis.AddAsync(buyingAPI);
-                await _dbContext.SaveChangesAsync();
                 //Remove Balance from Account
                 user.Wallet.Balance -= model.price;
-                _dbContext.wallets.Update(user.Wallet);
+                _dbContext.Users.Update(user);
+
+                await _dbContext.SaveChangesAsync();
 
                 return Ok(new ResponseDTO()
                 {
@@ -215,8 +216,20 @@ namespace AMS.Controllers
                     Success = false
                 });
             }
+
             var user = userJwtToken.User;
-            return Ok(user.BoughtApis);
+
+            if (user.BoughtApis == null)
+            {
+                return BadRequest(new ResponseDTO()
+                {
+                    Success = false,
+                    Errors = new List<string> { "User havent bought an API yet" }
+                });
+            }
+            
+            
+            return Ok(user.BoughtApis.ToList());
         }
     }
 }
