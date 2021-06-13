@@ -73,7 +73,7 @@ namespace AMS.Controllers
 
         public async Task<IActionResult> GetAllAPIs()
         {
-            var models = await _dbContext.ApiModels.Select(x => new APIModelResponse() { id = x.id, name = x.name, desc = x.desc }).ToListAsync();
+            var models = await _dbContext.ApiModels.Select(x => new APIModelResponse() { id = x.id, name = x.name, desc = x.desc , price = x.price , sampleCall = x.sampleCall }).ToListAsync();
             if (models.Count == 0)
                 return BadRequest(new ResponseDTO()
                 {
@@ -101,12 +101,8 @@ namespace AMS.Controllers
                             "API with Guid {" + id.ToString() + "} doesn't exist"
                         }
                 });
-            return Ok(new APIModelResponse()
-            {
-                id = model.id,
-                name = model.name,
-                desc = model.desc
-            });
+
+            return Ok(model);
         }
     }
 }
