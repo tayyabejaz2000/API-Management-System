@@ -219,6 +219,9 @@ namespace AMS.Controllers
 
             var user = userJwtToken.User;
             var boughtAPIs = await _dbContext.BoughtApis.Where(b => b.User == user).Include(b => b.api).ToListAsync();
+            boughtAPIs.ForEach(x => x.api.boughtAPIs = null);
+            boughtAPIs.ForEach(x => x.User = null);
+            
             if (boughtAPIs == null || boughtAPIs.Count == 0)
             {
                 return BadRequest(new ResponseDTO()
