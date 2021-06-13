@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -10,6 +11,8 @@ namespace AMS.Data
     {
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<APIModel> ApiModels { get; set; }
+        public DbSet<BoughtAPIs> BoughtApis { get; set; }
+        public DbSet<UserWallet> wallets { get; set; }
 
         public ApiDbContext() { }
         public ApiDbContext(DbContextOptions<ApiDbContext> options)
@@ -73,6 +76,16 @@ namespace AMS.Data
             modelBuilder.Entity<APIModel>()
             .Property(a => a.price)
             .IsRequired();
+
+            //Bought APIs
+            modelBuilder.Entity<BoughtAPIs>()
+            .HasKey(b => new { b.apiID, b.UserID });
+            modelBuilder.Entity<BoughtAPIs>()
+            .HasOne(b => b.User).WithMany(u => u.BoughtApis).HasForeignKey(b => b.UserID)
+            .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<BoughtAPIs>()
+            .HasOne(b => b.api).WithMany(a => a.boughtAPIs).HasForeignKey(b => b.apiID)
+            .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

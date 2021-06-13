@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AMS.Models
@@ -12,5 +13,6 @@ namespace AMS.Models
         public string sampleCall { get; set; }
         public string desc { get; set; }
         public uint price { get; set; }
+        public ICollection<BoughtAPIs> boughtAPIs { get; set; }
     }
 }

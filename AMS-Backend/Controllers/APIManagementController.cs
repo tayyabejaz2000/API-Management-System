@@ -73,7 +73,7 @@ namespace AMS.Controllers
 
         public async Task<IActionResult> GetAllAPIs()
         {
-            var models = await _dbContext.ApiModels.Select(x => new APIModelResponse() { id = x.id, name = x.name, desc = x.desc , price = x.price , sampleCall = x.sampleCall }).ToListAsync();
+            var models = await _dbContext.ApiModels.Select(x => new APIModelResponse() { id = x.id, name = x.name, desc = x.desc, price = x.price, sampleCall = x.sampleCall }).ToListAsync();
             if (models.Count == 0)
                 return BadRequest(new ResponseDTO()
                 {
@@ -103,6 +103,91 @@ namespace AMS.Controllers
                 });
 
             return Ok(model);
+        }
+
+        [HttpPost]
+        [Route("BuyAPI")]
+        public async Task<IActionResult> BuyAPI([FromBody] APIGetRequest id)
+        {
+            var Token = Request.Headers["refreshToken"].ToString();
+            var userJwtToken = _dbContext.RefreshTokens.Where(x => x.Token == Token).Include(x => x.User).ThenInclude(x => x.Wallet).FirstOrDefault();
+            if (userJwtToken == null)
+            {
+                return BadRequest(new RegistrationResponse()
+                {
+                    Errors = new List<string>() {
+                        "Invalid Token"
+                    },
+                    Success = false
+                });
+            }
+            else if (userJwtToken.User == null)
+            {
+                return BadRequest(new RegistrationResponse()
+                {
+                    Errors = new List<string>() {
+                        "Bad Token"
+                    },
+                    Success = false
+                });
+            }
+            var user = userJwtToken.User;
+
+            var model = await _dbContext.ApiModels.Where(x => x.id == id.id).FirstOrDefaultAsync();
+            if (model == null)
+                return BadRequest(new ResponseDTO()
+                {
+                    Success = false,
+                    Errors = new List<string>
+                        {
+                            "API with Guid {" + id.ToString() + "} doesn't exist"
+                        }
+                });
+
+            //If User doesn't have enough Balance in account
+            if (model.price > user.Wallet.Balance)
+                return BadRequest(new ResponseDTO()
+                {
+                    Success = false,
+                    Errors = new List<string>
+                        {
+                            "User doesn't have enough Balance to buy this API"
+                        }
+                });
+
+            var buyingAPI = new BoughtAPIs()
+            {
+                boughtOn = DateTime.UtcNow,
+                expiresOn = DateTime.UtcNow.AddMonths(1),
+                User = user,
+                api = model,
+            };
+            try
+            {
+                //Add Bought API to DB
+                await _dbContext.BoughtApis.AddAsync(buyingAPI);
+                await _dbContext.SaveChangesAsync();
+                //Remove Balance from Account
+                user.Wallet.Balance -= model.price;
+                _dbContext.wallets.Update(user.Wallet);
+
+                return Ok(new ResponseDTO()
+                {
+                    Success = true,
+                });
+            }
+            catch (DbUpdateException e)
+            {
+                Console.Write(e.Message);
+                return BadRequest(new ResponseDTO()
+                {
+                    Success = false,
+                    Errors = new List<string>{
+                        "There was an error buying this API",
+                        e.Message
+                    }
+                });
+            }
         }
     }
 }

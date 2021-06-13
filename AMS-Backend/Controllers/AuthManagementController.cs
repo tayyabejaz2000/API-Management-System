@@ -67,7 +67,7 @@ namespace AMS.Controllers
                     UserName = user.Username,
                     Wallet = new UserWallet()
                     {
-                        Balance = 0
+                        Balance = 1000
                     }
                 };
                 var isCreated = await _userManager.CreateAsync(newUser, user.Password);
